@@ -1,7 +1,6 @@
 // server.js
 // Backend que fica ENTRE o painel (frontend) e a NexusPag.
 // A API key da NexusPag SÓ existe aqui, nunca no navegador do cliente.
-
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -10,11 +9,11 @@ import crypto from 'crypto';
 const app = express();
 
 // Só o domínio do seu painel pode chamar este backend.
-// Configure ALLOWED_ORIGIN no .env com a URL exata onde o painel.html está hospedado
-// (ex: https://seuusuario.github.io). Sem isso, o navegador bloqueia a chamada.
+// Configure ALLOWED_ORIGIN no .env (ou nas env vars do Render) com a URL exata
+// onde o painel.html está hospedado (ex: https://seuusuario.github.io)
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN;
 if (!ALLOWED_ORIGIN) {
-  console.warn('AVISO: ALLOWED_ORIGIN não definido no .env — liberando qualquer origem (use só em teste local).');
+  console.warn('AVISO: ALLOWED_ORIGIN não definido — liberando qualquer origem (use só em teste local).');
 }
 app.use(cors({ origin: ALLOWED_ORIGIN || true }));
 
@@ -26,10 +25,10 @@ app.use(express.json({
 const NEXUSPAG_BASE_URL = 'https://nexuspag.com';
 const API_KEY = process.env.NEXUSPAG_API_KEY;
 const WEBHOOK_SECRET = process.env.NEXUSPAG_WEBHOOK_SECRET;
-const WEBHOOK_URL = process.env.WEBHOOK_PUBLIC_URL; // ex: https://sua-api.com/webhooks/pagamentos
+const WEBHOOK_URL = process.env.WEBHOOK_PUBLIC_URL; // ex: https://sua-api.onrender.com/webhooks/pagamentos
 
 if (!API_KEY) {
-  console.error('ERRO: defina NEXUSPAG_API_KEY no .env antes de subir o servidor.');
+  console.error('ERRO: defina NEXUSPAG_API_KEY nas variáveis de ambiente antes de subir o servidor.');
   process.exit(1);
 }
 
@@ -44,7 +43,6 @@ const VALORES_PERMITIDOS = [100, 150, 200];
 app.post('/api/pagamentos/pix', async (req, res) => {
   try {
     const { valor, descricao } = req.body;
-
     if (!VALORES_PERMITIDOS.includes(Number(valor))) {
       return res.status(400).json({ erro: `Valor inválido. Use um de: ${VALORES_PERMITIDOS.join(', ')}` });
     }
@@ -66,10 +64,6 @@ app.post('/api/pagamentos/pix', async (req, res) => {
     });
 
     const dados = await resposta.json();
-
-    // LOG TEMPORÁRIO: mostra exatamente o que a NexusPag devolveu, pra
-    // descobrirmos os nomes reais dos campos (QR code, copia-e-cola etc.)
-    console.log('Resposta da NexusPag (/api/pix/create):', JSON.stringify(dados, null, 2));
 
     if (!resposta.ok) {
       console.error('NexusPag retornou erro:', dados);
@@ -117,7 +111,6 @@ app.post('/webhooks/pagamentos', (req, res) => {
 
     const evento = req.body;
     console.log('Webhook recebido:', evento.event ?? evento);
-
     // TODO: aqui você atualiza o pedido no seu banco de dados
     // conforme evento.event: payment.confirmed / refund.completed / etc.
 
