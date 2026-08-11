@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0D1117">
+<title>Painel de Pagamentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0D1117;
+    --surface: #161D2B;
+    --surface-2: #1E2740;
+    --border: #2A3450;
+    --text: #EDEFF5;
+    --text-dim: #8B93AB;
+    --pix: #2DD9C3;
+    --pix-dark: #0F6E63;
+    --card: #9B8CFF;
+    --amber: #F2B705;
+    --danger: #FF6B6B;
+    --radius: 16px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent;}
+  html{ -webkit-text-size-adjust: 100%; }
+  body{
+    background: radial-gradient(circle at 15% 0%, #14213D 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 40px 20px calc(24px + env(safe-area-inset-bottom));
+    padding-top: calc(40px + env(safe-area-inset-top));
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .eyebrow{
+    font-family:'Space Grotesk', sans-serif;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--pix);
+    margin-bottom: 10px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: clamp(26px, 7vw, 40px);
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-align:center;
+  }
+  .subtitle{ color: var(--text-dim); margin-bottom: 32px; font-size:14px; text-align:center; }
+
+  .painel{
+    width: 100%;
+    max-width: 460px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: clamp(20px, 6vw, 28px);
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,.6);
+  }
+
+  label{
+    font-size: 13px;
+    color: var(--text-dim);
+    display:block;
+    margin-bottom: 10px;
+  }
+
+  .valores{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+  .valor-btn{
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 14px 4px;
+    min-height: 56px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size: clamp(15px, 4.5vw, 18px);
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: all .15s ease;
+  }
+  .valor-btn:hover{ border-color: var(--pix); }
+  .valor-btn.selected{
+    border-color: var(--pix);
+    background: linear-gradient(160deg, var(--pix-dark), var(--surface-2));
+    box-shadow: 0 0 0 1px var(--pix) inset;
+  }
+  .valor-btn small{ display:block; font-family:'Inter'; font-weight:400; font-size:11px; color:var(--text-dim); margin-top:2px;}
+
+  .btn-principal{
+    width:100%;
+    padding: 16px 0;
+    min-height: 52px;
+    border-radius: 12px;
+    border: none;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: opacity .15s ease, transform .1s ease;
+  }
+  .btn-principal:active{ transform: scale(.98); }
+  .btn-principal:disabled{ opacity:.5; cursor:not-allowed; }
+  .btn-pix{ background: var(--pix); color: #08281F; }
+
+  .resultado{
+    margin-top: 22px;
+    padding: 18px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    display:none;
+  }
+  .resultado.show{ display:block; }
+  .resultado.erro{ border-color: var(--danger); color: var(--danger); }
+  .resultado img{ width:100%; border-radius:8px; margin-bottom:12px; }
+  .copia-cola{
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 11px;
+    word-break: break-all;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    max-height: 80px;
+    overflow-y:auto;
+  }
+  .btn-copiar{
+    width:100%;
+    padding: 12px 0;
+    min-height: 44px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  @media (max-width: 360px){
+    body{ padding-left: 14px; padding-right: 14px; }
+    .painel{ padding: 18px; }
+    .valores{ gap: 6px; }
+    .valor-btn small{ font-size: 10px; }
+  }
+
+  @media (hover: none){
+    .valor-btn:hover{ border-color: var(--border); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="eyebrow">Checkout</div>
+  <h1>Finalizar pagamento</h1>
+  <p class="subtitle">Escolha o valor e pague com Pix</p>
+
+  <div class="painel">
+    <!-- ABA PIX -->
+    <div id="conteudo-pix">
+      <label>Valor</label>
+      <div class="valores" id="valores-pix">
+        <button class="valor-btn" data-valor="100">R$ 100<small>à vista</small></button>
+        <button class="valor-btn" data-valor="150">R$ 150<small>à vista</small></button>
+        <button class="valor-btn" data-valor="200">R$ 200<small>à vista</small></button>
+      </div>
+      <button class="btn-principal btn-pix" id="btn-gerar-pix" disabled>Gerar QR Code Pix</button>
+
+      <div class="resultado" id="resultado-pix">
+        <div id="resultado-pix-conteudo"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ⚠️ Configure aqui a URL do SEU backend (o server.js), não da NexusPag.
+  const API_BASE_URL = 'http://localhost:3001';
+
+  // --- Seleção de valor (Pix) ---
+  let valorSelecionado = null;
+  const btnGerarPix = document.getElementById('btn-gerar-pix');
+
+  document.querySelectorAll('#valores-pix .valor-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#valores-pix .valor-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      valorSelecionado = Number(btn.dataset.valor);
+      btnGerarPix.disabled = false;
+    });
+  });
+
+  // --- Gerar cobrança Pix chamando o SEU backend ---
+  btnGerarPix.addEventListener('click', async () => {
+    if (!valorSelecionado) return;
+
+    const resultado = document.getElementById('resultado-pix');
+    const conteudo = document.getElementById('resultado-pix-conteudo');
+    resultado.classList.remove('erro');
+    resultado.classList.add('show');
+    conteudo.innerHTML = 'Gerando cobrança...';
+    btnGerarPix.disabled = true;
+
+    try {
+      const resp = await fetch(`${API_BASE_URL}/api/pagamentos/pix`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valor: valorSelecionado })
+      });
+      const dados = await resp.json();
+
+      if (!resp.ok) throw new Error(dados.erro || 'Falha ao gerar Pix');
+
+      // Ajuste os campos abaixo (qr_code_image / qr_code / copia_cola) conforme
+      // o formato exato que a resposta da NexusPag realmente devolver.
+      conteudo.innerHTML = `
+        ${dados.qr_code_image ? `<img src="${dados.qr_code_image}" alt="QR Code Pix">` : ''}
+        <div class="copia-cola">${dados.copia_cola || dados.qr_code || 'Código Pix não retornado pela API'}</div>
+        <button class="btn-copiar" id="btn-copiar">Copiar código Pix</button>
+      `;
+
+      const btnCopiar = document.getElementById('btn-copiar');
+      if (btnCopiar) {
+        btnCopiar.addEventListener('click', () => {
+          navigator.clipboard.writeText(dados.copia_cola || dados.qr_code || '');
+          btnCopiar.textContent = 'Copiado!';
+          setTimeout(() => btnCopiar.textContent = 'Copiar código Pix', 1500);
+        });
+      }
+    } catch (erro) {
+      resultado.classList.add('erro');
+      conteudo.innerHTML = erro.message;
+    } finally {
+      btnGerarPix.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
