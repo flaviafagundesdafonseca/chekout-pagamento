@@ -150,6 +150,20 @@
     cursor: pointer;
     touch-action: manipulation;
   }
+  .debug-json{
+    margin-top: 10px;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y:auto;
+  }
 
   @media (max-width: 360px){
     body{ padding-left: 14px; padding-right: 14px; }
@@ -188,7 +202,10 @@
 
 <script>
   // ⚠️ Configure aqui a URL do SEU backend (o server.js), não da NexusPag.
-const API_BASE_URL = 'https://chekout-pagamento.onrender.com';
+  const API_BASE_URL = 'https://chekout-pagamento.onrender.com';
+
+  // Ative isso temporariamente pra ver o JSON cru que a NexusPag devolve.
+  const DEBUG = true;
 
   // --- Seleção de valor (Pix) ---
   let valorSelecionado = null;
@@ -202,6 +219,25 @@ const API_BASE_URL = 'https://chekout-pagamento.onrender.com';
       btnGerarPix.disabled = false;
     });
   });
+
+  // Procura o valor certo dentro da resposta, não importa o nome exato do campo
+  // nem se ele está aninhado (ex: dados.pix.qrcode, dados.charge.qr_code, etc).
+  function encontrarCampo(obj, candidatos, profundidadeMax = 3) {
+    if (!obj || typeof obj !== 'object' || profundidadeMax < 0) return null;
+    for (const chave of Object.keys(obj)) {
+      const chaveLower = chave.toLowerCase();
+      if (candidatos.some(c => chaveLower === c || chaveLower.includes(c))) {
+        if (typeof obj[chave] === 'string' && obj[chave].length > 0) return obj[chave];
+      }
+    }
+    for (const chave of Object.keys(obj)) {
+      if (typeof obj[chave] === 'object' && obj[chave] !== null) {
+        const achado = encontrarCampo(obj[chave], candidatos, profundidadeMax - 1);
+        if (achado) return achado;
+      }
+    }
+    return null;
+  }
 
   // --- Gerar cobrança Pix chamando o SEU backend ---
   btnGerarPix.addEventListener('click', async () => {
@@ -224,18 +260,20 @@ const API_BASE_URL = 'https://chekout-pagamento.onrender.com';
 
       if (!resp.ok) throw new Error(dados.erro || 'Falha ao gerar Pix');
 
-      // Ajuste os campos abaixo (qr_code_image / qr_code / copia_cola) conforme
-      // o formato exato que a resposta da NexusPag realmente devolver.
+      const imagemQr = encontrarCampo(dados, ['qr_code_image', 'qrcodeimage', 'qr_code_base64', 'base64', 'encodedimage', 'image']);
+      const copiaCola = encontrarCampo(dados, ['copia_cola', 'copiaecola', 'pix_copia_e_cola', 'brcode', 'emv', 'qr_code', 'qrcode', 'payload', 'pix_key', 'pixcopiaecola']);
+
       conteudo.innerHTML = `
-        ${dados.qr_code_image ? `<img src="${dados.qr_code_image}" alt="QR Code Pix">` : ''}
-        <div class="copia-cola">${dados.copia_cola || dados.qr_code || 'Código Pix não retornado pela API'}</div>
-        <button class="btn-copiar" id="btn-copiar">Copiar código Pix</button>
+        ${imagemQr ? `<img src="${imagemQr.startsWith('data:') ? imagemQr : `data:image/png;base64,${imagemQr}`}" alt="QR Code Pix">` : ''}
+        <div class="copia-cola">${copiaCola || 'Código Pix não retornado pela API'}</div>
+        ${copiaCola ? '<button class="btn-copiar" id="btn-copiar">Copiar código Pix</button>' : ''}
+        ${DEBUG ? `<div class="debug-json">${JSON.stringify(dados, null, 2)}</div>` : ''}
       `;
 
       const btnCopiar = document.getElementById('btn-copiar');
       if (btnCopiar) {
         btnCopiar.addEventListener('click', () => {
-          navigator.clipboard.writeText(dados.copia_cola || dados.qr_code || '');
+          navigator.clipboard.writeText(copiaCola || '');
           btnCopiar.textContent = 'Copiado!';
           setTimeout(() => btnCopiar.textContent = 'Copiar código Pix', 1500);
         });
